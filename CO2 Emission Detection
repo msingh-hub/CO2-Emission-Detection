@@ -1,0 +1,70 @@
+import serial
+import time
+
+# Function to read CO2 level from the serial port
+def read_co2_level(serial_port):
+    try:
+        # Read the data from the serial port
+        line = serial_port.readline().decode('utf-8').strip()
+        co2_level = float(line)
+        return co2_level
+    except ValueError:
+        return None
+
+# Function to suggest plants based on CO2 levels
+def suggest_plants(co2_level):
+    if co2_level is None:
+        return "Error: Unable to read CO2 level."
+    
+    if co2_level < 600:
+        return {
+            "indoor": {"num_plants": 2, "plants": ["Snake Plant", "Spider Plant"]},
+            "outdoor": {"num_plants": 3, "plants": ["Aloe Vera", "Lavender"]},
+            "day_plants": ["Areca Palm", "Money Plant"],
+            "night_plants": ["Sansevieria", "Peace Lily"]
+        }
+    elif 600 <= co2_level < 1200:
+        return {
+            "indoor": {"num_plants": 4, "plants": ["Boston Fern", "Chinese Evergreen"]},
+            "outdoor": {"num_plants": 5, "plants": ["Bamboo Palm", "Gerbera Daisy"]},
+            "day_plants": ["Ficus", "Spider Plant"],
+            "night_plants": ["Aloe Vera", "Orchid"]
+        }
+    else:
+        return {
+            "indoor": {"num_plants": 6, "plants": ["Philodendron", "Pothos"]},
+            "outdoor": {"num_plants": 7, "plants": ["Rubber Plant", "Weeping Fig"]},
+            "day_plants": ["Peace Lily", "Dracaena"],
+            "night_plants": ["Gardenia", "Tulsi"]
+        }
+
+# Main function
+def main():
+    # Open serial port (update with your port and baud rate)
+    try:
+        with serial.Serial('COM3', 9600, timeout=1) as ser:
+            print("Connected to serial port.")
+            while True:
+                co2_level = read_co2_level(ser)
+                if co2_level is not None:
+                    print(f"Detected CO2 level: {co2_level:.2f} ppm")
+
+                    plant_suggestions = suggest_plants(co2_level)
+                    
+                    print("\nPlant Suggestions to Reduce CO2:")
+                    if isinstance(plant_suggestions, dict):
+                        print(f"Indoor Plants (Total: {plant_suggestions['indoor']['num_plants']}): {', '.join(plant_suggestions['indoor']['plants'])}")
+                        print(f"Outdoor Plants (Total: {plant_suggestions['outdoor']['num_plants']}): {', '.join(plant_suggestions['outdoor']['plants'])}")
+                        print(f"Daytime Plants: {', '.join(plant_suggestions['day_plants'])}")
+                        print(f"Nighttime Plants: {', '.join(plant_suggestions['night_plants'])}")
+                    else:
+                        print(plant_suggestions)
+                else:
+                    print("Failed to read CO2 level.")
+                
+                time.sleep(2)  # Adjust the delay if needed
+    except serial.SerialException as e:
+        print(f"Error connecting to serial port: {e}")
+
+if __name__ == "__main__":
+    main()
